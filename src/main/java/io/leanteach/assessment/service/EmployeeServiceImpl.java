@@ -10,10 +10,14 @@ import io.leanteach.assessment.exception.AlreadyExistsException;
 import io.leanteach.assessment.exception.ResourceNotFoundException;
 import io.leanteach.assessment.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 
@@ -27,7 +31,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeDto save(EmployeeRegistrationDto employeeRegistrationDto) {
-        validateIfExists(employeeRegistrationDto);
+        validateIfExists(employeeRegistrationDto.getCandidateId(), employeeRegistrationDto.getPositionId());
         Candidate candidate = candidateService.findFirst(employeeRegistrationDto.getCandidateId());
         Position position = positionService.findFirst(employeeRegistrationDto.getPositionId());
         Employee employee = save(candidate, position, employeeRegistrationDto);
@@ -56,6 +60,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeRepository.deleteById(id);
     }
 
+    @Override
+    public Page<EmployeeDto> findAll(Optional<String> employeeName, Optional<Long> positionId, Pageable pageable) {
+        String employeeNameValue = employeeName.orElse(null);
+        Long positionIdValue = positionId.orElse(null);
+        Page<Employee> page = employeeRepository.findAll(employeeNameValue, positionIdValue, pageable);
+        return new PageImpl<>(
+                page.getContent().stream().map(this::toDto).collect(Collectors.toList()),
+                page.getPageable(),
+                page.getTotalElements());
+    }
+
     private Employee save(Candidate candidate, Position position, EmployeeRegistrationDto employeeRegistrationDto) {
         return Employee.builder()
                 .candidate(candidate)
@@ -64,14 +79,10 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .build();
     }
 
-    private void validateIfExists(EmployeeRegistrationDto employeeRegistrationDto) {
-        Optional<Employee> optionalEmployee = employeeRepository.findFirstByCandidateIdAndPositionId(
-                employeeRegistrationDto.getCandidateId(), employeeRegistrationDto.getPositionId());
+    private void validateIfExists(long candidateId, long positionId) {
+        Optional<Employee> optionalEmployee = employeeRepository.findFirstByCandidateIdAndPositionId(candidateId, positionId);
         if (optionalEmployee.isPresent()) {
-            throw new AlreadyExistsException(
-                    format("The employee associate with the candidate %s and the position %s already exist",
-                            employeeRegistrationDto.getCandidateId(),
-                            employeeRegistrationDto.getPositionId()));
+            throw new AlreadyExistsException(format("The employee associate with the candidate %s and the position %s already exist", candidateId, positionId));
         }
     }
 
@@ -80,6 +91,15 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .id(employee.getId())
                 .position(positionService.toDto(position))
                 .person(candidateService.toDto(candidate))
+                .salary(employee.getSalary())
+                .build();
+    }
+
+    private EmployeeDto toDto(Employee employee) {
+        return EmployeeDto.builder()
+                .id(employee.getId())
+                .position(positionService.toDto(employee.getPosition()))
+                .person(candidateService.toDto(employee.getCandidate()))
                 .salary(employee.getSalary())
                 .build();
     }
