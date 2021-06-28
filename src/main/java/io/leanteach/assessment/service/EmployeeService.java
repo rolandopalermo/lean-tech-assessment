@@ -17,4 +17,7 @@ public interface EmployeeService {
     void delete(long id);
 
     Page<EmployeeDto> findAll(Optional<String> employeeName, Optional<Long> positionId, Pageable pageable);
+
+    Object findAllDetails();
+
 }

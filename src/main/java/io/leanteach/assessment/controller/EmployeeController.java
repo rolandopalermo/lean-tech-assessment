@@ -50,7 +50,12 @@ public class EmployeeController {
     public ResponseEntity<HttpResponseDto<Page<CandidateDto>>> findAll(@RequestParam(value = "employeeName") Optional<String> employeeName,
                                                                        @RequestParam(value = "positionId") Optional<Long> positionId,
                                                                        Pageable pageable) {
-        return new ResponseEntity<>(new HttpResponseDto(true, employeeService.findAll(employeeName, positionId, pageable)), HttpStatus.CREATED);
+        return new ResponseEntity<>(new HttpResponseDto(true, employeeService.findAll(employeeName, positionId, pageable)), HttpStatus.OK);
+    }
+
+    @GetMapping("report")
+    public ResponseEntity<HttpResponseDto<?>> findAllDetails() {
+        return new ResponseEntity<>(new HttpResponseDto(true, employeeService.findAllDetails()), HttpStatus.OK);
     }
 
 }

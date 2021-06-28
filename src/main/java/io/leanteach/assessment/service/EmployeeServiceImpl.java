@@ -4,8 +4,10 @@ import io.leanteach.assessment.domain.Candidate;
 import io.leanteach.assessment.domain.Employee;
 import io.leanteach.assessment.domain.Position;
 import io.leanteach.assessment.dto.EmployeeDto;
+import io.leanteach.assessment.dto.EmployeeInfoDto;
 import io.leanteach.assessment.dto.EmployeeRegistrationDto;
 import io.leanteach.assessment.dto.UpdateEmployeeDto;
+import io.leanteach.assessment.dto.report.CompanyDepartmentDto;
 import io.leanteach.assessment.exception.AlreadyExistsException;
 import io.leanteach.assessment.exception.ResourceNotFoundException;
 import io.leanteach.assessment.repository.EmployeeRepository;
@@ -16,6 +18,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -69,6 +73,34 @@ public class EmployeeServiceImpl implements EmployeeService {
                 page.getContent().stream().map(this::toDto).collect(Collectors.toList()),
                 page.getPageable(),
                 page.getTotalElements());
+    }
+
+    @Override
+    public Object findAllDetails() {
+        List<CompanyDepartmentDto> departments = new ArrayList<>();
+        employeeRepository.findAllDetails()
+                .stream()
+                .forEach(employeeInfoDto -> {
+                    Optional<CompanyDepartmentDto> department = findDepartmentById(departments, employeeInfoDto.getPositionId());
+                    if (department.isPresent()) {
+                        department.get().getEmployees().add(employeeInfoDto.getEmployee());
+                    } else {
+                        departments.add(buildDepartment(employeeInfoDto));
+                    }
+                });
+        return departments;
+    }
+
+    private Optional<CompanyDepartmentDto> findDepartmentById(List<CompanyDepartmentDto> companyDepartmentDtoList, Long id) {
+        return companyDepartmentDtoList.stream().filter(e -> e.getId() == id).findFirst();
+    }
+
+    private CompanyDepartmentDto buildDepartment(EmployeeInfoDto employeeInfoDto) {
+        CompanyDepartmentDto department = new CompanyDepartmentDto();
+        department.setId(employeeInfoDto.getPositionId());
+        department.setName(employeeInfoDto.getPositionName());
+        department.getEmployees().add(employeeInfoDto.getEmployee());
+        return department;
     }
 
     private Employee save(Candidate candidate, Position position, EmployeeRegistrationDto employeeRegistrationDto) {
