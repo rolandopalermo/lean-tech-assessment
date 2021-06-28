@@ -9,4 +9,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
     Optional<Employee> findFirstByCandidateIdAndPositionId(long candidateId, long positionId);
 
+    Optional<Employee> findFirstByIdAndCandidateId(long id, long candidateId);
+
 }

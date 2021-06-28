@@ -11,9 +11,9 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class EmployeeRegistrationDto {
+public class UpdateEmployeeDto {
 
-    private long candidateId;
+    private CandidateDto person;
     private long positionId;
     private BigDecimal salary;
 

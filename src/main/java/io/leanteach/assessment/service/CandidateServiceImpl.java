@@ -30,6 +30,16 @@ public class CandidateServiceImpl implements CandidateService {
     }
 
     @Override
+    public Candidate update(CandidateDto candidateDto) {
+        Optional<Candidate> optionalPosition = candidateRepository.findById(candidateDto.getId());
+        optionalPosition.orElseThrow(
+                () -> new ResourceNotFoundException(format("The candidate with the ID number [%s] does not exists", candidateDto.getIdNumber())));
+        Candidate candidate = candidateMapper.toDomain(candidateDto);
+        candidate.setId(candidateDto.getId());
+        return candidateRepository.save(candidate);
+    }
+
+    @Override
     public Candidate findFirst(long id) {
         return candidateRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(format("The candidate [%s] does not exist", id)));

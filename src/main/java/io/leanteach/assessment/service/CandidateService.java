@@ -7,6 +7,8 @@ public interface CandidateService {
 
     CandidateDto save(CandidateDto candidateDto);
 
+    Candidate update(CandidateDto candidateDto);
+
     Candidate findFirst(long id);
 
     CandidateDto toDto(Candidate candidate);
